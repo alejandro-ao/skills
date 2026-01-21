@@ -5,7 +5,7 @@ Claude Code plugin marketplace by Alejandro AO.
 ## Installation
 
 ```bash
-/plugin marketplace add alejandro-ao/alejandro-plugins
+/plugin marketplace add alejandro-ao/skills
 ```
 
 ## Available Plugins
@@ -15,7 +15,7 @@ Claude Code plugin marketplace by Alejandro AO.
 AI-powered video processing toolkit.
 
 ```bash
-/plugin install video-tool@alejandro-plugins
+/plugin install video-tool@skills
 ```
 
 **Requires:** `video-tool` CLI installed separately:
