@@ -16,7 +16,7 @@
         "repo": "alejandro-ao/video-tool-cli"
       },
       "description": "AI-powered video processing CLI - download, trim, transcribe, enhance audio, generate descriptions, upload to YouTube/Bunny",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "author": {
         "name": "Alejandro AO"
       },
