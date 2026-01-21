@@ -20,7 +20,7 @@ AI-powered video processing toolkit.
 
 **Requires:** `video-tool` CLI installed separately:
 ```bash
-uv tool install git+https://github.com/alejandro-ao/video-tools.git
+uv tool install git+https://github.com/alejandro-ao/video-tool-cli.git
 ```
 
 **Features:**

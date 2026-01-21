@@ -17,7 +17,7 @@
       "author": {
         "name": "Alejandro AO"
       },
-      "repository": "https://github.com/alejandro-ao/alejandro-plugins",
+      "repository": "https://github.com/alejandro-ao/video-tool-cli",
       "keywords": ["video", "ffmpeg", "youtube", "transcription", "audio", "whisper"],
       "category": "media"
     }

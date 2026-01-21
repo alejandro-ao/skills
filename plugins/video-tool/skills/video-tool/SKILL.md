@@ -32,11 +32,11 @@ If not installed, run:
 
 ```bash
 # Requires Python 3.11+ and uv
-uv tool install git+https://github.com/alejandro-ao/video-tools.git
+uv tool install git+https://github.com/alejandro-ao/video-tool-cli.git
 
 # Or for development
-git clone https://github.com/alejandro-ao/video-tools.git
-cd video-tools
+git clone git@github.com:alejandro-ao/video-tool-cli.git
+cd video-tool-cli
 uv tool install --editable .
 ```
 
