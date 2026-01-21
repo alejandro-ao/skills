@@ -2,7 +2,7 @@
   "name": "alejandro-plugins",
   "owner": {
     "name": "Alejandro AO",
-    "email": "alex@alejandro-ao.com"
+    "email": "hello@alejandro-ao.com"
   },
   "metadata": {
     "description": "Claude Code plugins by Alejandro AO",
@@ -11,7 +11,10 @@
   "plugins": [
     {
       "name": "video-tool",
-      "source": "./plugins/video-tool",
+      "source": {
+        "source": "github",
+        "repo": "alejandro-ao/video-tool-cli"
+      },
       "description": "AI-powered video processing CLI - download, trim, transcribe, enhance audio, generate descriptions, upload to YouTube/Bunny",
       "version": "1.0.0",
       "author": {
