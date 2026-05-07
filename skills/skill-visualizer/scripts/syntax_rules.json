@@ -1,0 +1,73 @@
+{
+  "python": [
+    {"re": "\"\"\"[\\s\\S]*?\"\"\"", "flags": "gm", "cls": "syn-string"},
+    {"re": "'''[\\s\\S]*?'''", "flags": "gm", "cls": "syn-string"},
+    {"re": "#.*$", "flags": "gm", "cls": "syn-comment"},
+    {"re": "\\b(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield)\\b", "flags": "g", "cls": "syn-keyword"},
+    {"re": "\\b(int|float|str|bool|list|dict|tuple|set|bytes|object|type|range|slice)\\b", "flags": "g", "cls": "syn-type"},
+    {"re": "\\b(print|len|enumerate|zip|map|filter|sorted|reversed|open|input|isinstance|hasattr|getattr|setattr|any|all|sum|min|max|abs|round|chr|ord|repr|dir|vars)\\b", "flags": "g", "cls": "syn-builtin"},
+    {"re": "\\b(self|cls)\\b", "flags": "g", "cls": "syn-param"},
+    {"re": "\\b(\\d+\\.?\\d*)\\b", "flags": "g", "cls": "syn-number"},
+    {"re": "\"[^\"]*\"", "flags": "g", "cls": "syn-string"},
+    {"re": "'[^']*'", "flags": "g", "cls": "syn-string"}
+  ],
+  "javascript": [
+    {"re": "/\\*[\\s\\S]*?\\*/", "flags": "gm", "cls": "syn-comment"},
+    {"re": "//.*$", "flags": "gm", "cls": "syn-comment"},
+    {"re": "`[^`]*`", "flags": "g", "cls": "syn-string"},
+    {"re": "\"[^\"]*\"", "flags": "g", "cls": "syn-string"},
+    {"re": "'[^']*'", "flags": "g", "cls": "syn-string"},
+    {"re": "\\b(import|export|from|default|const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|throw|try|catch|finally|class|extends|super|this|typeof|instanceof|in|of|async|await|yield|static|get|set|delete|void|with|debugger|true|false|null|undefined|NaN|Infinity)\\b", "flags": "g", "cls": "syn-keyword"},
+    {"re": "\\b(String|Number|Boolean|Array|Object|Function|Symbol|Map|Set|WeakMap|WeakSet|Promise|RegExp|Error|Date|JSON|Math|console|window|document)\\b", "flags": "g", "cls": "syn-type"},
+    {"re": "\\b(\\d+\\.?\\d*)\\b", "flags": "g", "cls": "syn-number"}
+  ],
+  "typescript": [
+    {"re": "/\\*[\\s\\S]*?\\*/", "flags": "gm", "cls": "syn-comment"},
+    {"re": "//.*$", "flags": "gm", "cls": "syn-comment"},
+    {"re": "`[^`]*`", "flags": "g", "cls": "syn-string"},
+    {"re": "\"[^\"]*\"", "flags": "g", "cls": "syn-string"},
+    {"re": "'[^']*'", "flags": "g", "cls": "syn-string"},
+    {"re": "\\b(import|export|from|default|const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|throw|try|catch|finally|class|extends|super|this|typeof|instanceof|in|of|async|await|yield|static|get|set|delete|void|with|debugger|true|false|null|undefined|NaN|Infinity|type|interface|enum|implements|abstract|private|public|protected|readonly|keyof|as|is)\\b", "flags": "g", "cls": "syn-keyword"},
+    {"re": "\\b(String|Number|Boolean|Array|Object|Function|Symbol|Map|Set|WeakMap|WeakSet|Promise|RegExp|Error|Date|JSON|Math|console|window|document)\\b", "flags": "g", "cls": "syn-type"},
+    {"re": "\\b(\\d+\\.?\\d*)\\b", "flags": "g", "cls": "syn-number"}
+  ],
+  "shell": [
+    {"re": "#.*$", "flags": "gm", "cls": "syn-comment"},
+    {"re": "\"[^\"]*\"", "flags": "g", "cls": "syn-string"},
+    {"re": "'[^']*'", "flags": "g", "cls": "syn-string"},
+    {"re": "\\b(if|then|else|elif|fi|for|while|do|done|in|case|esac|function|return|exit|export|local|source|echo|printf|read|set|unset|shift|trap|eval|exec|cd|pwd|ls|cat|grep|sed|awk|mkdir|rm|cp|mv|chmod|chown|alias|unalias|declare|typeset)\\b", "flags": "g", "cls": "syn-keyword"},
+    {"re": "\\$(\\w+|\\{\\w+\\}|\\([^)]*\\))", "flags": "g", "cls": "syn-builtin"}
+  ],
+  "json": [
+    {"re": "\"(?:[^\"\\\\]|\\\\.)*\"", "flags": "g", "cls": "syn-string"},
+    {"re": "\\b(true|false|null)\\b", "flags": "g", "cls": "syn-keyword"},
+    {"re": "\\b(-?\\d+\\.?\\d*(?:[eE][+-]?\\d+)?)\\b", "flags": "g", "cls": "syn-number"}
+  ],
+  "yaml": [
+    {"re": "#.*$", "flags": "gm", "cls": "syn-comment"},
+    {"re": "\"[^\"]*\"", "flags": "g", "cls": "syn-string"},
+    {"re": "'[^']*'", "flags": "g", "cls": "syn-string"},
+    {"re": "\\b(true|false|null|yes|no|on|off)\\b", "flags": "g", "cls": "syn-keyword"},
+    {"re": "\\b(\\d+\\.?\\d*)\\b", "flags": "g", "cls": "syn-number"}
+  ],
+  "markdown": [
+    {"re": "<!--[\\s\\S]*?-->", "flags": "gm", "cls": "syn-comment"},
+    {"re": "^(#{1,6})\\s.*$", "flags": "gm", "cls": "syn-keyword"},
+    {"re": "`[^`]+`", "flags": "g", "cls": "syn-string"}
+  ],
+  "css": [
+    {"re": "/\\*[\\s\\S]*?\\*/", "flags": "gm", "cls": "syn-comment"},
+    {"re": "\"[^\"]*\"", "flags": "g", "cls": "syn-string"},
+    {"re": "'[^']*'", "flags": "g", "cls": "syn-string"},
+    {"re": "\\b(\\d+\\.?\\d*(?:px|em|rem|%|vh|vw|s|ms|deg)?)\\b", "flags": "g", "cls": "syn-number"},
+    {"re": "[.#]\\w[\\w-]*", "flags": "g", "cls": "syn-tag"},
+    {"re": ":(\\s*)(#[0-9a-fA-F]{3,8}|\\w+\\([^)]*\\)|\\w+)", "flags": "g", "cls": "syn-attr"}
+  ],
+  "html": [
+    {"re": "<!--[\\s\\S]*?-->", "flags": "gm", "cls": "syn-comment"},
+    {"re": "\"[^\"]*\"", "flags": "g", "cls": "syn-string"},
+    {"re": "'[^']*'", "flags": "g", "cls": "syn-string"},
+    {"re": "</?[\\w-]+", "flags": "g", "cls": "syn-tag"},
+    {"re": "\\b[\\w-]+(?=\\s*=)", "flags": "g", "cls": "syn-attr"}
+  ]
+}
