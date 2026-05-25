@@ -461,11 +461,29 @@ Never add a firewall rule for port `9119`; only `80`/`443` should be public.
 
 ---
 
-## Phase 9: Backups
+## Phase 9: Guided GitHub Backups
 
-Explain that secrets should not go into Git.
+The goal of this phase is to create an automatic backup of Hermes' durable, non-secret state.
+Explain this clearly before starting:
 
-Recommended tracked files:
+```text
+Next we are going to set up GitHub backups for Hermes. This does not back up secrets or the whole application. It backs up the parts you would want to keep if this VPS disappeared: config, personality, memories, cron jobs, and installed/custom skills.
+```
+
+Make sure the user understands two important points:
+
+1. The backup runs automatically every hour.
+2. A new Git commit is created only when something actually changed. Seeing no new commit every hour is normal.
+
+### Step 9.1: Explain what will and will not be backed up
+
+Tell the user:
+
+```text
+I am going to back up selected Hermes files only. I will intentionally exclude API keys, tokens, logs, caches, lock files, and runtime state that should not be committed to GitHub.
+```
+
+Tracked files/directories:
 
 ```text
 /home/agentuser/.hermes/config.yaml
@@ -475,11 +493,13 @@ Recommended tracked files:
 /home/agentuser/.hermes/skills/
 ```
 
-Optional:
+Optional, only if the user explicitly wants chat history in GitHub:
 
 ```text
 /home/agentuser/.hermes/sessions/
 ```
+
+Explain that `sessions/` can contain private conversation history and may grow large, so it is not included by default.
 
 Never track:
 
@@ -490,28 +510,48 @@ cache/
 audio_cache/
 image_cache/
 gateway_state.json
+channel_directory.json
 gateway.lock
 gateway.pid
 auth.lock
 hermes-agent/
 node_modules/
+__pycache__/
 ```
 
-Create backup repo:
+### Step 9.2: Create the local backup repository
 
-```bash
-sudo -H -u agentuser bash -lc 'mkdir -p /home/agentuser/hermes-backup && cd /home/agentuser/hermes-backup && git init && git branch -M main'
-```
-
-Create a sync script at:
+Tell the user:
 
 ```text
-/home/agentuser/hermes-backup/sync-hermes-backup.sh
+First I am creating a local Git repository on the VPS. This gives us local version history even before GitHub is connected.
 ```
 
-Script:
+Run:
 
 ```bash
+sudo -H -u agentuser bash -lc '
+mkdir -p /home/agentuser/hermes-backup
+cd /home/agentuser/hermes-backup
+git init
+git branch -M main
+git config user.name "Hermes Backup Bot"
+git config user.email "hermes-backup@localhost"
+'
+```
+
+### Step 9.3: Create the sync script
+
+Tell the user:
+
+```text
+Now I am creating a small sync script. Each time it runs, it copies the safe Hermes files into the backup repo, commits only if something changed, and pushes to GitHub if a remote has been configured.
+```
+
+Create `/home/agentuser/hermes-backup/sync-hermes-backup.sh`:
+
+```bash
+sudo -H -u agentuser tee /home/agentuser/hermes-backup/sync-hermes-backup.sh >/dev/null <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -551,10 +591,31 @@ fi
 
 if git remote get-url origin >/dev/null 2>&1; then
   git push
+else
+  echo "No GitHub remote configured yet; local backup is complete."
 fi
+EOF
+sudo chmod 750 /home/agentuser/hermes-backup/sync-hermes-backup.sh
+sudo chown agentuser:agentuser /home/agentuser/hermes-backup/sync-hermes-backup.sh
 ```
 
-Create hourly systemd timer:
+Run it once locally:
+
+```bash
+sudo -H -u agentuser bash -lc 'cd /home/agentuser/hermes-backup && ./sync-hermes-backup.sh && git log --oneline -3'
+```
+
+Explain the result. If it says `No GitHub remote configured yet`, that is expected at this stage.
+
+### Step 9.4: Create the hourly backup timer
+
+Tell the user:
+
+```text
+Now I am creating a systemd timer. This is like a reliable cron job managed by Linux. It will run the backup script every hour, including after reboots.
+```
+
+Create the service and timer:
 
 ```bash
 sudo tee /etc/systemd/system/hermes-git-backup.service >/dev/null <<'EOF'
@@ -584,20 +645,62 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now hermes-git-backup.timer
+systemctl list-timers hermes-git-backup.timer --no-pager
 ```
 
-For GitHub remote backups, create a dedicated deploy key:
+Explain:
 
-```bash
-sudo -H -u agentuser ssh-keygen -t ed25519 -C "hermes backup deploy key" -f /home/agentuser/.ssh/hermes_backup_deploy_key -N ""
+```text
+This timer runs hourly, but it only creates a Git commit when tracked Hermes files changed. If nothing changed, the run succeeds with 'No Hermes backup changes to commit.'
 ```
 
-Give the public key to the user and ask them to add it to GitHub as a deploy key with write access.
+### Step 9.5: Prepare GitHub remote backup
 
-Configure SSH host alias and remote:
+Before generating keys, tell the user exactly what they need to do in GitHub:
+
+```text
+Now we need a GitHub repository to receive these backups.
+
+Please create a new private GitHub repository for this VPS backup. A name like `hermes-pa`, `hermes-vps-backup`, or `my-hermes-backup` is fine.
+
+Do not initialize it with secrets. A README is okay, but an empty repo is simplest.
+
+After I generate a deploy key, I will show you a public key. You will add that public key to the new GitHub repository under:
+
+Settings → Deploy keys → Add deploy key
+
+Give it a clear title like `Hermes VPS backup key`, paste the key, and enable `Allow write access`.
+```
+
+Then generate a dedicated deploy key as `agentuser`:
 
 ```bash
-sudo -H -u agentuser bash -lc 'cat >> ~/.ssh/config <<EOF
+sudo -H -u agentuser bash -lc '
+install -d -m 700 ~/.ssh
+if [ ! -f ~/.ssh/hermes_backup_deploy_key ]; then
+  ssh-keygen -t ed25519 -C "hermes backup deploy key" -f ~/.ssh/hermes_backup_deploy_key -N ""
+fi
+chmod 600 ~/.ssh/hermes_backup_deploy_key
+chmod 644 ~/.ssh/hermes_backup_deploy_key.pub
+cat ~/.ssh/hermes_backup_deploy_key.pub
+'
+```
+
+Show the public key to the user and pause. Do not continue until the user confirms they added it to GitHub with write access.
+
+### Step 9.6: Configure SSH for GitHub
+
+Tell the user:
+
+```text
+Now I am configuring SSH so only this backup repository uses the deploy key we just created.
+```
+
+Run:
+
+```bash
+sudo -H -u agentuser bash -lc '
+cat >> ~/.ssh/config <<EOF
 Host github.com-hermes-backup
   HostName github.com
   User git
@@ -605,14 +708,57 @@ Host github.com-hermes-backup
   IdentitiesOnly yes
 EOF
 ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+chmod 600 ~/.ssh/config
 '
 ```
 
-Then add remote:
+### Step 9.7: Connect the backup repo to GitHub
+
+Ask the user for the GitHub repository path in `OWNER/REPO` format, for example:
+
+```text
+alejandro-ao/hermes-pa
+```
+
+Then add the remote and push. Replace `OWNER/REPO` before running:
 
 ```bash
-sudo -H -u agentuser bash -lc 'cd /home/agentuser/hermes-backup && git remote add origin git@github.com-hermes-backup:OWNER/REPO.git && git push -u origin main'
+sudo -H -u agentuser bash -lc '
+cd /home/agentuser/hermes-backup
+git remote remove origin 2>/dev/null || true
+git remote add origin git@github.com-hermes-backup:OWNER/REPO.git
+git push -u origin main
+'
 ```
+
+If the push fails with `Permission denied (publickey)`, explain that the deploy key was not added correctly, was added to the wrong repo, or was added without write access.
+
+### Step 9.8: Verify the backup end-to-end
+
+Tell the user:
+
+```text
+Finally I am going to verify the backup. I will check the timer, run the backup once, and confirm the local branch is tracking GitHub.
+```
+
+Run:
+
+```bash
+systemctl list-timers hermes-git-backup.timer --no-pager
+sudo systemctl start hermes-git-backup.service
+sudo journalctl -u hermes-git-backup.service -n 80 --no-pager
+sudo -H -u agentuser bash -lc 'cd /home/agentuser/hermes-backup && git status -sb && git log --oneline --decorate -5 && git remote -v'
+```
+
+A good result:
+
+- The timer is active and scheduled hourly.
+- The service exits successfully.
+- The backup repo has `origin` set to GitHub.
+- `main` tracks `origin/main`.
+- The GitHub repository shows the latest backup commit.
+
+If the script says `No Hermes backup changes to commit`, explain that this is good: the backup ran and found no changed tracked files.
 
 ---
 
