@@ -19,6 +19,7 @@ End with a Hermes Agent instance that:
 - Uses the user's chosen LLM provider/model.
 - Has browser/search/tooling configured sanely.
 - Has logs and health checks.
+- Exposes the Hermes dashboard safely through HTTPS and authentication when the user wants web access.
 - Has safe Git-based backups for non-secret config and memory.
 - Does **not** expose secrets or unsafe services publicly.
 
@@ -299,7 +300,168 @@ Then test by messaging the bot.
 
 ---
 
-## Phase 8: Backups
+## Phase 8: Protected Hermes Dashboard
+
+Explain that `hermes dashboard` contains sensitive configuration, sessions, logs, and API-key management. Never expose it with `--host 0.0.0.0 --insecure` directly.
+
+Recommended default:
+
+- Run the dashboard as a `systemd` service bound only to `127.0.0.1:9119`.
+- Put Caddy in front on ports `80`/`443`.
+- Protect Caddy with Basic Auth.
+- Use a real domain/subdomain for trusted Let's Encrypt HTTPS when available.
+- If no domain is available yet, use a temporary self-signed certificate for the VPS IP and tell the user the browser will show a certificate warning until DNS is configured.
+
+If an insecure dashboard is already running, stop it first:
+
+```bash
+sudo pkill -u agentuser -f '/hermes dashboard' || true
+sudo pkill -u agentuser -f 'hermes dashboard --host' || true
+```
+
+Install Caddy:
+
+```bash
+sudo apt update
+sudo DEBIAN_FRONTEND=noninteractive apt install -y caddy
+```
+
+Create the dashboard service:
+
+```bash
+sudo tee /etc/systemd/system/hermes-dashboard.service >/dev/null <<'EOF'
+[Unit]
+Description=Hermes Agent Dashboard - local backend for protected reverse proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=agentuser
+Group=agentuser
+Environment=HOME=/home/agentuser
+Environment=HERMES_HOME=/home/agentuser/.hermes
+Environment=PATH=/home/agentuser/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+WorkingDirectory=/home/agentuser/.hermes
+ExecStart=/home/agentuser/.local/bin/hermes dashboard --host 127.0.0.1 --port 9119 --no-open --skip-build
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+Generate Basic Auth credentials and save them root-only:
+
+```bash
+DASH_USER="hermes"
+DASH_PASS="$(openssl rand -base64 24 | tr -d '\n')"
+DASH_HASH="$(caddy hash-password --plaintext "$DASH_PASS")"
+sudo install -d -m 700 /root/hermes-dashboard
+printf 'username: %s\npassword: %s\n' "$DASH_USER" "$DASH_PASS" | sudo tee /root/hermes-dashboard/credentials.txt >/dev/null
+sudo chmod 600 /root/hermes-dashboard/credentials.txt
+```
+
+### Preferred Caddy config when the user has a domain
+
+Ask the user for a subdomain such as `hermes.example.com`, and confirm its DNS A/AAAA record points to the VPS. Then write:
+
+```bash
+DASH_DOMAIN="hermes.example.com" # replace with the user's domain
+sudo tee /etc/caddy/Caddyfile >/dev/null <<EOF
+${DASH_DOMAIN} {
+  basicauth {
+    ${DASH_USER} ${DASH_HASH}
+  }
+
+  reverse_proxy 127.0.0.1:9119 {
+    # Hermes validates the Host header against the dashboard bind host.
+    header_up Host 127.0.0.1:9119
+  }
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "no-referrer"
+  }
+}
+EOF
+```
+
+Caddy will automatically request and renew a trusted Let's Encrypt certificate.
+
+### Temporary Caddy config without a domain
+
+Only use this until DNS is available. It is encrypted, but browsers will warn because the cert is self-signed.
+
+```bash
+PUBLIC_IP="$(curl -fsS https://api.ipify.org)"
+sudo install -d -m 750 -o root -g caddy /etc/caddy/certs
+sudo openssl req -x509 -nodes -newkey rsa:2048 -days 825 \
+  -keyout /etc/caddy/certs/hermes-dashboard.key \
+  -out /etc/caddy/certs/hermes-dashboard.crt \
+  -subj "/CN=${PUBLIC_IP}" \
+  -addext "subjectAltName=IP:${PUBLIC_IP},DNS:localhost,IP:127.0.0.1"
+sudo chown root:caddy /etc/caddy/certs/hermes-dashboard.key /etc/caddy/certs/hermes-dashboard.crt
+sudo chmod 640 /etc/caddy/certs/hermes-dashboard.key
+sudo chmod 644 /etc/caddy/certs/hermes-dashboard.crt
+
+sudo tee /etc/caddy/Caddyfile >/dev/null <<EOF
+:80 {
+  redir https://{host}{uri} permanent
+}
+
+:443 {
+  tls /etc/caddy/certs/hermes-dashboard.crt /etc/caddy/certs/hermes-dashboard.key
+
+  basicauth {
+    ${DASH_USER} ${DASH_HASH}
+  }
+
+  reverse_proxy 127.0.0.1:9119 {
+    # Hermes validates the Host header against the dashboard bind host.
+    header_up Host 127.0.0.1:9119
+  }
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "no-referrer"
+  }
+}
+EOF
+```
+
+Enable and verify:
+
+```bash
+sudo caddy fmt --overwrite /etc/caddy/Caddyfile
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl daemon-reload
+sudo systemctl enable --now hermes-dashboard.service
+sudo systemctl enable --now caddy
+sudo systemctl reload caddy
+sudo ss -ltnp | grep -E ':(80|443|9119)\\b' || true
+sudo -H -u agentuser bash -lc 'export PATH="$HOME/.local/bin:$PATH"; hermes dashboard --status || true'
+```
+
+Expected result:
+
+- Caddy listens publicly on `80` and `443`.
+- Hermes listens only on `127.0.0.1:9119`.
+- Unauthenticated HTTPS returns `401`.
+- Authenticated HTTPS returns `200`.
+
+Never add a firewall rule for port `9119`; only `80`/`443` should be public.
+
+---
+
+## Phase 9: Backups
 
 Explain that secrets should not go into Git.
 
@@ -454,7 +616,7 @@ sudo -H -u agentuser bash -lc 'cd /home/agentuser/hermes-backup && git remote ad
 
 ---
 
-## Phase 9: Health Checks and Final Verification
+## Phase 10: Health Checks and Final Verification
 
 Run:
 
@@ -481,7 +643,7 @@ Some `hermes doctor` warnings may be acceptable if they are for unused optional 
 
 ---
 
-## Phase 10: First Message to Hermes
+## Phase 11: First Message to Hermes
 
 After the bot works, help the user send a first message that teaches Hermes about the VPS.
 
@@ -496,6 +658,7 @@ Important setup details:
 - Your Hermes home/config/data directory is `/home/agentuser/.hermes`.
 - Your code is installed at `/home/agentuser/.hermes/hermes-agent`.
 - You run continuously through the systemd service `hermes-gateway.service`.
+- Your web dashboard runs through `hermes-dashboard.service`, bound locally to `127.0.0.1:9119` and exposed only through the protected reverse proxy.
 - I talk to you through Telegram.
 - This VPS is intended to be a long-running agent host.
 - A local Git backup repo exists at `/home/agentuser/hermes-backup`.
