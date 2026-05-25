@@ -48,6 +48,15 @@ Examples of steps that deserve explicit explanation:
 
 Keep explanations simple, practical, and non-alarming.
 
+The entire setup should feel like a guided installation, not like dumping a script on the user. For every phase:
+
+- Briefly introduce what is about to happen and why it matters.
+- Use clear, friendly language that a non-sysadmin can follow.
+- Keep the tone lightly ludic/playful when appropriate: encouraging, human, and pleasant, but never childish or distracting.
+- After important commands, summarize what changed and what the user should expect next.
+- When waiting on the user, give exact instructions and examples, especially for GitHub, Telegram, DNS, SSH keys, and credentials.
+- Prefer small checkpoints over long unexplained command blocks.
+
 ## Setup Phases
 
 Follow these phases in order unless the user asks otherwise.
