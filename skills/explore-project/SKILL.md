@@ -1,6 +1,6 @@
 ---
-name: create-docs
-description: Creates beginner-friendly, step-by-step documentation for a project. Use this skill when asked to document a project, create docs for a codebase, or generate comprehensive documentation guides. Triggers on phrases like "create docs", "write the docs", "document this project", "generate documentation", or when starting work on a new project and the user says "document this".
+name: explore-project
+description: Creates beginner-friendly, step-by-step documentation for a project. Use this skill when the user wants to understand, document, or explore an unfamiliar codebase. Triggers on phrases like "explore this project", "document this", "create docs", "what does this codebase do", "understand this project", or when starting work on a new project and needing to map it out.
 ---
 
 # Create Documentation
