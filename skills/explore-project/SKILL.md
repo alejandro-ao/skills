@@ -34,10 +34,10 @@ ls -la
 
 ### 2. Create Documentation Directory
 
-Create a `.docs/` directory in the project root:
+Create an `.exploration/` directory in the project root:
 
 ```bash
-mkdir -p .docs
+mkdir -p .exploration
 ```
 
 ### 3. Determine What Documents to Create
@@ -215,7 +215,7 @@ For a typical project, create:
 ```
 project/
 ├── README.md          (points to docs)
-└── .docs/
+└── .exploration/
     ├── README.md      (index of all docs)
     ├── 01-architecture-overview.md
     ├── 02-entry-point.md
