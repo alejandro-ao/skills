@@ -845,6 +845,132 @@ Customize this with the user's actual model, messaging platform, GitHub repo, an
 
 ---
 
+## Phase 12: Create VPS Config Tracking Skill
+
+Before finishing, create a dedicated agent skill named `vps-config` that documents the current VPS configuration and must be updated whenever future server changes are made.
+
+Explain to the user:
+
+```text
+Finally, I’m creating a VPS configuration tracking agent skill. This is not a secrets backup. It is operational documentation for future agents so they know how this server is configured, what services exist, what ports should be open, and what must be updated after changes.
+```
+
+Create the skill directory:
+
+```bash
+AGENT_SKILLS_DIR="${AGENT_SKILLS_DIR:-/home/alejandro/.agent/skills}"
+mkdir -p "$AGENT_SKILLS_DIR/vps-config/references"
+```
+
+Create `$AGENT_SKILLS_DIR/vps-config/SKILL.md` with:
+
+```markdown
+---
+name: vps-config
+description: Documentation and operational context for this VPS/server configuration. Use before reading, changing, updating, hardening, debugging, or replacing any VPS/server configuration including SSH, firewall, packages, systemd services, Hermes Agent, Caddy/HTTPS, DNS, dashboard, users, backups, or credentials handling. After any server configuration change, update this skill's references and changelog.
+---
+
+# VPS Config
+
+This skill documents how this VPS is configured so future agents can safely continue server administration without rediscovering everything from scratch.
+
+## Mandatory workflow
+
+Use this skill whenever the task might affect VPS/server configuration, including:
+
+- SSH, sudo, users, groups, firewall, fail2ban, package management, unattended upgrades.
+- Systemd services, timers, long-running daemons, ports, DNS, Caddy, HTTPS/TLS, reverse proxies.
+- Hermes Agent install/config, Telegram/Discord gateway, dashboard, browser/runtime dependencies.
+- Backups, deployment keys, secrets, credentials, API keys, or root-only files.
+
+Before making changes:
+
+1. Read this file.
+2. Read the relevant reference file(s) below.
+3. Verify current state with commands; do not assume the docs are perfectly current.
+4. Avoid printing or committing secrets. Redact `.env`, API keys, bot tokens, passwords, auth files, and private keys.
+5. Explain risky changes and ask before modifying SSH, firewall, systemd, Caddy, package repositories, credentials, or public exposure.
+
+After making any durable server configuration change:
+
+1. Update the affected reference file(s).
+2. Add an entry to `references/changelog.md`.
+3. If the change touches secrets, document only the path, owner, permissions, and purpose — never the secret value.
+4. If validation commands were run, record the useful result.
+
+## Current high-level state
+
+Fill this in at the end of setup with the actual discovered values:
+
+- Provider/hardware:
+- Hostname:
+- OS:
+- Admin user:
+- Runtime user:
+- Public IPv4:
+- Public IPv6:
+- Domain/subdomain:
+- Intended public ports:
+- Hermes gateway service:
+- Hermes dashboard service:
+- Dashboard public URL:
+- Backup location:
+- GitHub backup repo:
+
+## References
+
+Read the relevant docs before acting:
+
+- [Setup source and history](references/setup-source.md)
+- [System baseline, users, packages, directories](references/system-baseline.md)
+- [Security: SSH, UFW, fail2ban, unattended upgrades](references/security.md)
+- [Hermes Agent configuration and services](references/hermes.md)
+- [Dashboard, Caddy, DNS, TLS, and ports](references/dashboard-caddy-dns.md)
+- [Backups and persistence](references/backups.md)
+- [Operational commands](references/operations.md)
+- [Change log](references/changelog.md)
+```
+
+Create the reference files and populate them with the actual final server state:
+
+```bash
+touch \
+  "$AGENT_SKILLS_DIR/vps-config/references/setup-source.md" \
+  "$AGENT_SKILLS_DIR/vps-config/references/system-baseline.md" \
+  "$AGENT_SKILLS_DIR/vps-config/references/security.md" \
+  "$AGENT_SKILLS_DIR/vps-config/references/hermes.md" \
+  "$AGENT_SKILLS_DIR/vps-config/references/dashboard-caddy-dns.md" \
+  "$AGENT_SKILLS_DIR/vps-config/references/backups.md" \
+  "$AGENT_SKILLS_DIR/vps-config/references/operations.md" \
+  "$AGENT_SKILLS_DIR/vps-config/references/changelog.md"
+```
+
+Each reference file should document the current state, relevant paths, service names, validation commands, and safe operational notes.
+
+Do not include secrets, API keys, bot tokens, dashboard passwords, private keys, or `.env` contents.
+
+At minimum, document:
+
+- OS version, hostname, users, groups, important directories.
+- SSH hardening status.
+- UFW rules.
+- fail2ban status.
+- Installed packages/runtime dependencies.
+- Hermes install path.
+- Hermes service names and status.
+- Dashboard service, Caddy config path, domain, TLS mode, and exposed ports.
+- Backup repo path, backup timer, GitHub remote, and excluded secret files.
+- Common commands for checking status, logs, restarting services, and running backups.
+- A changelog entry for the initial setup.
+
+After creating the skill, remind the user:
+
+```text
+The VPS config skill is now the source of truth for future server administration. Any future agent that changes SSH, firewall, systemd, Caddy, Hermes, DNS, backups, packages, or credentials should update that skill and its changelog after the change.
+```
+
+---
+
 ## Minimalism Principle
 
 Prefer the smallest working setup:
