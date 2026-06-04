@@ -1,0 +1,337 @@
+{
+  "version": "2026-06-04",
+  "description": "Default criteria templates by domain. These are starting points that get customized per-project.",
+  "domains": {
+    "coding": {
+      "criteria": [
+        {
+          "id": "skill-invocation",
+          "name": "Skill Invocation",
+          "check_type": "pattern",
+          "pattern": "/skill:{expected_skill}|\\${expected_skill}|{expected_skill}",
+          "required": true,
+          "failure_impact": "cap_correctness_at_0.5"
+        },
+        {
+          "id": "ran-tests",
+          "name": "Test Execution",
+          "check_type": "command_pattern",
+          "patterns": ["pytest", "npm test", "cargo test", "go test", "jest", "vitest", "mocha"],
+          "required": false
+        },
+        {
+          "id": "read-test-output",
+          "name": "Read Test Output",
+          "check_type": "response_pattern",
+          "patterns": ["test result", "passing", "failing", "tests passed", "tests failed", "error:", "output shows", "result is"],
+          "required": false
+        },
+        {
+          "id": "no-edit-loops",
+          "name": "No Edit Loops",
+          "check_type": "sequence",
+          "max_repetitions": 3,
+          "tool": "edit",
+          "required": false
+        },
+        {
+          "id": "parallelized-reads",
+          "name": "Parallelized Reads",
+          "check_type": "parallelization",
+          "tool": "read",
+          "required": false
+        },
+        {
+          "id": "read-command-output",
+          "name": "Read Command Output",
+          "check_type": "response_pattern",
+          "patterns": ["output shows", "result is", "the command returned", "stdout", "stderr"],
+          "required": false
+        },
+        {
+          "id": "created-expected-files",
+          "name": "Created Expected Files",
+          "check_type": "file_exists",
+          "required": false
+        },
+        {
+          "id": "no-dangerous-commands",
+          "name": "No Dangerous Commands",
+          "check_type": "command_pattern",
+          "forbidden_patterns": ["rm -rf /", "rm -rf ~", "chmod 777", "> /dev/sda", "dd if="],
+          "required": false
+        },
+        {
+          "id": "checked-edge-cases",
+          "name": "Checked Edge Cases",
+          "check_type": "response_pattern",
+          "patterns": ["edge case", "empty", "null", "undefined", "boundary", "invalid", "error handling"],
+          "required": false
+        },
+        {
+          "id": "compared-to-spec",
+          "name": "Compared to Spec",
+          "check_type": "response_pattern",
+          "patterns": ["as requested", "per the requirements", "matches the spec", "fulfills", "satisfies"],
+          "required": false
+        }
+      ]
+    },
+    "video-production": {
+      "criteria": [
+        {
+          "id": "skill-invocation",
+          "name": "Skill Invocation",
+          "check_type": "pattern",
+          "pattern": "/skill:{expected_skill}|\\${expected_skill}|{expected_skill}",
+          "required": true,
+          "failure_impact": "cap_correctness_at_0.5"
+        },
+        {
+          "id": "downloaded-source",
+          "name": "Downloaded Source Material",
+          "check_type": "command_pattern",
+          "patterns": ["youtube-dl", "yt-dlp", "wget", "curl -O"],
+          "required": false
+        },
+        {
+          "id": "checked-video-format",
+          "name": "Checked Video Format",
+          "check_type": "command_pattern",
+          "patterns": ["ffprobe", "mediainfo", "file ", "ffmpeg -i"],
+          "required": false
+        },
+        {
+          "id": "created-output-file",
+          "name": "Created Output File",
+          "check_type": "file_exists",
+          "required": false
+        },
+        {
+          "id": "verified-output-quality",
+          "name": "Verified Output Quality",
+          "check_type": "llm_judge",
+          "rubric": {
+            "levels": [
+              {
+                "score": 1.0,
+                "label": "Fully Verified",
+                "criteria": "Agent checks output file exists, verifies format/codec, confirms duration, and previews result",
+                "evidence_required": "Quote verification steps"
+              },
+              {
+                "score": 0.50,
+                "label": "Partially Verified",
+                "criteria": "Agent checks output exists but doesn't verify quality or format",
+                "evidence_required": "Quote what was checked and what was skipped"
+              },
+              {
+                "score": 0.0,
+                "label": "Not Verified",
+                "criteria": "Agent declares success without checking output",
+                "evidence_required": "Quote declaration without verification"
+              }
+            ],
+            "self_consistency_runs": 3,
+            "variance_threshold": 0.15
+          },
+          "contributes_to_dimension": "verification",
+          "dimension_weight": 0.60
+        },
+        {
+          "id": "minimal-hand-holding",
+          "name": "Minimal Hand-Holding",
+          "check_type": "llm_judge",
+          "rubric": {
+            "levels": [
+              {
+                "score": 1.0,
+                "label": "Fully Autonomous",
+                "criteria": "Agent completes task with ZERO user interventions after the initial prompt",
+                "evidence_required": "Confirm no user messages after the first task description"
+              },
+              {
+                "score": 0.75,
+                "label": "Minor Clarification",
+                "criteria": "User provides exactly 1 optional clarification",
+                "evidence_required": "Quote the clarification and explain why optional"
+              },
+              {
+                "score": 0.50,
+                "label": "Moderate Guidance",
+                "criteria": "User provides 2-3 interventions",
+                "evidence_required": "List each intervention with turn number and quote"
+              },
+              {
+                "score": 0.25,
+                "label": "Heavy Hand-Holding",
+                "criteria": "User provides 4+ interventions or corrects fundamental misunderstandings",
+                "evidence_required": "List interventions, identify fundamental misunderstanding"
+              },
+              {
+                "score": 0.0,
+                "label": "User Did The Work",
+                "criteria": "User essentially completed the task themselves",
+                "evidence_required": "Quote where user took over"
+              }
+            ],
+            "self_consistency_runs": 3,
+            "variance_threshold": 0.15
+          },
+          "contributes_to_dimension": "efficiency",
+          "dimension_weight": 0.40
+        }
+      ]
+    },
+    "research-writing": {
+      "criteria": [
+        {
+          "id": "skill-invocation",
+          "name": "Skill Invocation",
+          "check_type": "pattern",
+          "pattern": "/skill:{expected_skill}|\\${expected_skill}|{expected_skill}",
+          "required": true,
+          "failure_impact": "cap_correctness_at_0.5"
+        },
+        {
+          "id": "gathered-sources",
+          "name": "Gathered Sources",
+          "check_type": "llm_judge",
+          "rubric": {
+            "levels": [
+              {
+                "score": 1.0,
+                "label": "Thorough Research",
+                "criteria": "Agent identifies and reads 3+ relevant sources, cites them explicitly",
+                "evidence_required": "Quote source references and how they were used"
+              },
+              {
+                "score": 0.50,
+                "label": "Minimal Research",
+                "criteria": "Agent mentions sources but doesn't deeply engage with them",
+                "evidence_required": "Quote source mentions"
+              },
+              {
+                "score": 0.0,
+                "label": "No Research",
+                "criteria": "Agent writes from prior knowledge without gathering new sources",
+                "evidence_required": "Note absence of source gathering"
+              }
+            ],
+            "self_consistency_runs": 3,
+            "variance_threshold": 0.15
+          },
+          "contributes_to_dimension": "correctness",
+          "dimension_weight": 0.50
+        },
+        {
+          "id": "structured-output",
+          "name": "Structured Output",
+          "check_type": "llm_judge",
+          "rubric": {
+            "levels": [
+              {
+                "score": 1.0,
+                "label": "Well Structured",
+                "criteria": "Output has clear sections, headings, logical flow, and summary",
+                "evidence_required": "Describe structure"
+              },
+              {
+                "score": 0.50,
+                "label": "Partially Structured",
+                "criteria": "Output has some structure but missing sections or unclear flow",
+                "evidence_required": "Note what's structured and what's missing"
+              },
+              {
+                "score": 0.0,
+                "label": "Unstructured",
+                "criteria": "Output is a wall of text without organization",
+                "evidence_required": "Note absence of structure"
+              }
+            ],
+            "self_consistency_runs": 3,
+            "variance_threshold": 0.15
+          },
+          "contributes_to_dimension": "correctness",
+          "dimension_weight": 0.30
+        },
+        {
+          "id": "fact-checked",
+          "name": "Fact Checked",
+          "check_type": "llm_judge",
+          "rubric": {
+            "levels": [
+              {
+                "score": 1.0,
+                "label": "Verified Facts",
+                "criteria": "Agent explicitly verifies key claims against sources",
+                "evidence_required": "Quote fact-checking steps"
+              },
+              {
+                "score": 0.0,
+                "label": "Unverified",
+                "criteria": "Agent makes claims without verification",
+                "evidence_required": "Note absence of fact-checking"
+              }
+            ],
+            "self_consistency_runs": 3,
+            "variance_threshold": 0.15
+          },
+          "contributes_to_dimension": "verification",
+          "dimension_weight": 0.60
+        }
+      ]
+    },
+    "devops": {
+      "criteria": [
+        {
+          "id": "skill-invocation",
+          "name": "Skill Invocation",
+          "check_type": "pattern",
+          "pattern": "/skill:{expected_skill}|\\${expected_skill}|{expected_skill}",
+          "required": true,
+          "failure_impact": "cap_correctness_at_0.5"
+        },
+        {
+          "id": "dry-run-first",
+          "name": "Dry Run First",
+          "check_type": "command_pattern",
+          "patterns": ["--dry-run", "plan", "diff", "preview"],
+          "required": false
+        },
+        {
+          "id": "checked-health",
+          "name": "Checked Health After Deploy",
+          "check_type": "command_pattern",
+          "patterns": ["health", "status", "ping", "curl", "kubectl get"],
+          "required": false
+        },
+        {
+          "id": "rollback-plan",
+          "name": "Rollback Plan",
+          "check_type": "llm_judge",
+          "rubric": {
+            "levels": [
+              {
+                "score": 1.0,
+                "label": "Documented Rollback",
+                "criteria": "Agent documents how to rollback before making changes",
+                "evidence_required": "Quote rollback documentation"
+              },
+              {
+                "score": 0.0,
+                "label": "No Rollback Plan",
+                "criteria": "Agent makes changes without considering rollback",
+                "evidence_required": "Note absence of rollback consideration"
+              }
+            ],
+            "self_consistency_runs": 3,
+            "variance_threshold": 0.15
+          },
+          "contributes_to_dimension": "correctness",
+          "dimension_weight": 0.30
+        }
+      ]
+    }
+  }
+}
