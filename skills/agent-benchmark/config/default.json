@@ -1,0 +1,45 @@
+{
+  "default_models": ["gpt-4o", "claude-sonnet-4"],
+  "providers": {
+    "gpt-4o": {
+      "provider": "openai",
+      "env_key": "OPENAI_API_KEY"
+    },
+    "gpt-4o-mini": {
+      "provider": "openai",
+      "env_key": "OPENAI_API_KEY"
+    },
+    "claude-sonnet-4": {
+      "provider": "anthropic",
+      "env_key": "ANTHROPIC_API_KEY"
+    },
+    "claude-opus-4": {
+      "provider": "anthropic",
+      "env_key": "ANTHROPIC_API_KEY"
+    },
+    "gemini-2.5-pro": {
+      "provider": "google",
+      "env_key": "GOOGLE_API_KEY"
+    },
+    "local-llama": {
+      "provider": "ollama",
+      "base_url": "http://localhost:11434",
+      "env_key": null
+    }
+  },
+  "weights": {
+    "correctness": 0.40,
+    "efficiency": 0.25,
+    "tool_use": 0.20,
+    "verification": 0.15
+  },
+  "thresholds": {
+    "regression_drop": 0.10,
+    "critical_regression_drop": 0.15,
+    "timeout_seconds": 300
+  },
+  "judge": {
+    "default_model": "gpt-4o",
+    "temperature": 0.0
+  }
+}
